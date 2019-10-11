@@ -1,6 +1,6 @@
 
-# Load the first couple libraries. Most libraries and functions are loaded through
-# a call to `deferred.R`.
+# Load the first couple libraries. Most libraries and functions are loaded
+# through a call to `deferred.R`.
 
 library(shiny)
 library(shinyjs)
@@ -357,11 +357,12 @@ ui <- fluidPage(
 ################################################################################
 
 
+
 # Travis' notes and to-do for MetaBridge:
 # TODO Allow multiple mappings in one go (i.e. MetaCyc and KEGG
 # simultaneously?). Could make the two summary tables display side-by-side in
 # the top panel of mapping results, with detailed results below when a row is
-# selected
+# selected...
 
 
 server <- function(input, output, session) {
@@ -545,8 +546,8 @@ server <- function(input, output, session) {
         label = "Proceed",
         class = "btn-med btn-tooltip",
         style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50;",
-        title = "Proceed to mapping your metabolites",
-        `data-position` = "right"
+        title = "Proceed to mapping your metabolites"
+        # `data-position` = "right"
       )
     )
   })
@@ -860,9 +861,9 @@ server <- function(input, output, session) {
         downloadButton(
           "downloadMappingData",
           "Download",
-          style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50;",
+          style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50",
           class = "btn-med btn-tooltip",
-          title = "Download your full mapping results"
+          title = "Download your full mapping results",
         )
       )
     }
