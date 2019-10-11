@@ -2,7 +2,6 @@
 # Welcome to the MetaBridge Shiny app!
 
 # Travis' notes and to-do for MetaBridge:
-# TODO Support for mouse IDs? i.e. convert from human -> mouse genes in output
 # TODO Allow multiple mappings in one go (i.e. MetaCyc and KEGG
 # simultaneously?). Could make the two summary tables display side-by-side in
 # the top panel of mapping results, with detailed results below when a row is
@@ -55,6 +54,11 @@ shinyServer(function(input, output, session) {
   # When clicking "Tutorial", switch to `Tutorial` panel
   observeEvent(input$tutorial, {
     updateNavbarPage(session, inputId = "navbarLayout", selected = "tutorialPanel")
+  }, ignoreInit = TRUE)
+
+  # When clicking "About", switch to the `About` panel
+  observeEvent(input$about, {
+    updateNavbarPage(session, inputId = "navbarLayout", selected = "aboutPanel")
   }, ignoreInit = TRUE)
 
   ################################################
@@ -153,7 +157,7 @@ shinyServer(function(input, output, session) {
     tags$div(
       class = "col-sm-9",
       uiOutput("uploadSuccess"),
-      dataTableOutput("uploadedDataTable")
+      DT::dataTableOutput("uploadedDataTable")
     )
   })
 
@@ -309,7 +313,11 @@ shinyServer(function(input, output, session) {
   # This calls `generateSummaryTable()` from "functions/generateTables.R" and
   # only renders when the "Map" button is clicked
   observeEvent(input$mapButton, {
-    results <- generateSummaryTable(mappingObject(), idTypeChosen(), databaseChosen())
+    results <- generateSummaryTable(
+      mappingObject(),
+      idTypeChosen(),
+      databaseChosen()
+    )
     mappingSummary$table <- results$table
     mappingSummary$dbChosen <- results$dbChosen
   })
@@ -385,21 +393,19 @@ shinyServer(function(input, output, session) {
     # Update when we select a new metabolite in the summary table...
     selectedMetab()
     # ...or when we click the map button (this is important because we need to
-    # be able to update in case there are errors we need to display)
+    # be able to update in case there are errors we need to display).
     input$mapButton
   }, {
     # Pull the `$data` object from the `tryCatch()` output if there was an
     # error. This should default to the previous successful step.
-    if (mappingObject()$status == "error" |
-      mappingObject()$status == "empty") {
+    if (mappingObject()$status == "error" | mappingObject()$status == "empty") {
       mappingObject()$data %>% mappedMetaboliteTable()
 
     # Otherwise, generate our table depending on the chosen database! As with
-    # `generateSummaryTable()`, these functions come from
-    # "functions/generateTables.R"
+    # `generateSummaryTable()`, these functions come from "generateTables.R"
     } else if (databaseChosen() == "KEGG") {
       if (mappingSummary$dbChosen != "KEGG") {
-        cat("DATABASE WAS KEGG, NULL RETURNING...")
+        cat("DATABASE WAS NOT KEGG, NULL RETURNING...")
         # If our summary table was somehow not updated yet, exit
         return(NULL)
       } else {
@@ -414,6 +420,7 @@ shinyServer(function(input, output, session) {
     } else if (databaseChosen() == "MetaCyc") {
       # If our summary table was somehow not updated yet, exit
       if (mappingSummary$dbChosen != "MetaCyc") {
+        cat("DATABASE WAS NOT METACYC, NULL RETURNING...")
         return(NULL)
         # Otherwise proceed with generated the metabolite table
       } else {
@@ -461,7 +468,10 @@ shinyServer(function(input, output, session) {
         tags$h3("Intermediate Results")
         # Only render if we had non-null, non-error, non-empty results
       } else {
-        tags$h3("Per-Metabolite Mapping Results")
+        tagList(
+          tags$hr(),
+          tags$h3("Per-Metabolite Mapping Results")
+        )
       },
       # Rendered table from STEP TWO goes here!
       DT::dataTableOutput("mappedMetaboliteTable")
@@ -723,7 +733,7 @@ shinyServer(function(input, output, session) {
     # Pull the pathway ID from the pathway name selected by the user
     selectedPathwayID <-
       selectedRowAttrs$pathwaysOfSelectedCompound %>%
-      dplyr::filter(!!(pathwayNameIDcol) == input$pathwaysPicked) %>%
+      filter(!!(pathwayNameIDcol) == input$pathwaysPicked) %>%
       extract2("id")
 
     filename <- visualizePathview(

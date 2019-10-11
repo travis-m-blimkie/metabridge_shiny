@@ -35,11 +35,12 @@ load("data/k05_keggHumanPathways.RData")
 
 # Load MetaCyc database files ---------------------------------------------
 
-load("data/m01_metaCycDBLinks.RData")
-load("data/m02_metaCycCompoundsReactions.RData")
-load("data/m03_metaCycReactionsGenes.RData")
-load("data/m04_metaCycGeneIDs.RData")
-load("data/m05_metaCycPathways.RData")
+# Updated to MetaCyc v23, on September 19th, 2019
+load("data/m01_metaCycDBLinks_v23.RData")
+load("data/m02_metaCycCompoundsReactions_v23.RData")
+load("data/m03_metaCycReactionsGenes_v23.RData")
+load("data/m04_metaCycGeneIDs_v23.RData")
+load("data/m05_metaCycPathways_v23.RData")
 
 
 # Load HumanCyc cross-references ------------------------------------------
@@ -74,7 +75,7 @@ options(
     # autoWidth = TRUE,
     scrollX = "100%",
     # Argument to make sure DT doesn't overflow vertical scrolling options
-    scrollY = "250px",
+    scrollY = "300px",
     scrollCollapse = TRUE,
     paging = FALSE,
     dom = "tir"

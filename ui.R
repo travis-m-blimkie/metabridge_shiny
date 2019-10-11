@@ -1,6 +1,9 @@
 
 # Welcome to the MetaBridge Shiny app! This is the UI code defining how
-# everything looks.
+# everything looks. Note that many elements will be missing UI code here, as
+# they are generated in calls to renderUI() in `server.R` in order to allow for
+# more control over when/how elements are rendered.
+
 
 shinyUI(fluidPage(
   # Head linking to Flatly bootstrap theme and my personal tweaks
@@ -62,7 +65,7 @@ shinyUI(fluidPage(
         tags$div(
           class = "logoWrapper",
           tags$p(
-            "Welcome to MetaBridge v2, a web tool for network-based integrative ",
+            "Welcome to MetaBridge, a web tool for network-based integrative ",
             "analysis of metabolomics data. Here you can upload a set of metabolites ",
             "and identify the directly interacting enzymes for network integration. "
           ),
@@ -83,20 +86,36 @@ shinyUI(fluidPage(
           ),
           br(),
           div(
+
+            # To see how these buttons are hidden, refer to `www/js/client.js`
             actionButton(
               inputId = "getStarted",
               label = "Initializing App...",
               class = "btn-primary btn-lg disabled", # btn-tooltip
-              `data-position` = "right",
+              `data-position` = "bottom",
               icon("circle-o-notch", class = "fa fa-spin", lib = "font-awesome")
             ),
+
             HTML("&nbsp;&nbsp;&nbsp;"),
+
             actionButton(
               inputId = "tutorial",
               label = "Tutorial",
               class = "btn-success btn-lg btn-tooltip btn-hidden", # btn-tooltip
-              `data-position` = "right",
-              title = "Learn how to use MetaBridge for integrative analysis.",
+              `data-position` = "bottom",
+              style = "width: 155px",
+              title = "Learn how to use MetaBridge for integrative analysis."
+            ),
+
+            HTML("&nbsp;&nbsp;&nbsp;"),
+
+            actionButton(
+              inputId = "about",
+              label = "About",
+              class = "btn-primary btn-lg btn-tooltip btn-hidden", # btn-tooltip
+              style = "color: #2c3e50; background-color: #fff; border-color: #2c3e50; width: 155px",
+              `data-position` = "bottom",
+              title = "Visit the About page."
             )
           )
         )
@@ -178,7 +197,7 @@ shinyUI(fluidPage(
             "option to visualize your results."
           ),
           # For now just allow one database. Later we can allow multiple
-          # mappings at once
+          # mappings at once.
           radioButtons(
             "dbChosen",
             "Choose Database",
@@ -235,7 +254,10 @@ shinyUI(fluidPage(
               "Below you will find a sample workflow for integrating your ",
               "metabolomics data with transcriptomics or proteomics data via ",
               "network methodologies. You can also view this tutorial on ",
-              HTML("<a href='https://github.com/samhinshaw/metabridge_shiny/blob/master/tutorial/tutorial.md' target='_blank'>GitHub</a>.")
+              HTML(paste0(
+                "<a href='https://github.com/samhinshaw/metabridge_shiny/blob/master/tutorial/tutorial.md' ",
+                "target='_blank'>GitHub</a>."
+                ))
             ),
             tags$ol(
               tags$li(
@@ -257,22 +279,26 @@ shinyUI(fluidPage(
         )
       ),
       tabPanel(
-        "About",
+        value = "aboutPanel",
+        title = "About",
         tags$div(
           class = "jumbotron",
           tags$h1("About"),
           tags$div(
             class = "logoWrapper",
             tags$p(
-              "MetaBridge was designed by Samuel Hinshaw at the ",
+              "MetaBridge was designed by Samuel Hinshaw and Travis Blimkie at the ",
               tags$a(href = "http://cmdr.ubc.ca/bobh/", "Centre for Microbial Diseases and Immunity Research"),
-              " at The University of British Columbia, and v2 was developed by Travis Blimkie.",
+              " at The University of British Columbia.",
               "MetaBridge was published in",
               tags$em("Bioinformatics"),
               " (doi: ",
               tags$a(href = "https://doi.org/10.1093/bioinformatics/bty331", "10.1093/bioinformatics/bty331"),
-              "). Please cite this paper when using MetaBridge in your analyses."
+              "). Please cite this paper when using MetaBridge in your analyses. ",
+              "A protocol was also published in ", tags$em("Current Protocols in Bioinformatics"),
+              " (doi: ", tags$a(href = "", "doi_number"), ")."
             ),
+
             tags$p(
               "For help, you can post an issue at the ",
               tags$a(href = "https://github.com/travis-m-blimkie/metabridge_shiny", "Github page.")
@@ -285,13 +311,13 @@ shinyUI(fluidPage(
 
                 # MetaCyc
                 tags$dt(
-                  tags$a(href = "https://metacyc.org/", "MetaCyc v22")
+                  tags$a(href = "https://metacyc.org/", "MetaCyc v23")
                 ),
                 tags$dd("Curated database for human metabolomic data"),
 
                 # KEGG
                 tags$dt(
-                  tags$a(href = "https://www.genome.jp/kegg/", "KEGG v?")
+                  tags$a(href = "https://www.genome.jp/kegg/", "KEGG Release 92")
                 ),
                 tags$dd("Large database containing multiple data types"),
 
