@@ -1,17 +1,19 @@
 
 # Load the first couple libraries. Most libraries and functions are loaded
-# through a call to `deferred.R`.
+# through a call to `deferred.R` at the beginning of the `server()` function.
 
 library(shiny)
 library(shinyjs)
 
 
 ui <- fluidPage(
+
   # Head linking to Flatly bootstrap theme and my personal tweaks
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
     tags$link(rel = "stylesheet", type = "text/css", href = "css/user.css"),
     tags$link(rel = "stylesheet", type = "text/css", href = "css/tippy.css"),
+
     # Favicon options
     tags$link(rel = "apple-touch-icon", sizes = "180x180", href = "/apple-touch-icon.png"),
     tags$link(rel = "icon", type = "image/png", sizes = "32x32", href = "/favicon-32x32.png"),
@@ -19,6 +21,7 @@ ui <- fluidPage(
     tags$link(rel = "manifest", href = "/manifest.json"),
     tags$link(rel = "mask-icon", href = "/safari-pinned-tab.svg", color = "#303e4e"),
     tags$meta(name = "theme-color", content = "#303e4e"),
+
     HTML(
       "<!-- Global site tag (gtag.js) - Google Analytics -->
       <script async src='https://www.googletagmanager.com/gtag/js?id=UA-123892284-1'></script>
@@ -32,26 +35,31 @@ ui <- fluidPage(
       "
     )
   ),
-  # Body
+
+  ### Begin the tab bar layout
   navbarPage(
-    # Navbar Brand
+
     title = HTML("<img src ='/logo_white.svg' alt='M' height='28'"), #  MetaBridge <sup class='tiny'>BETA</sup>
     id = "navbarLayout",
-    # Make sure we use ShinyJS
+
+    # Make sure we use ShinyJS - NEED THIS LINE!
     header = tagList(useShinyjs()),
     windowTitle = "MetaBridge",
     collapsible = TRUE,
-    # Begin the tabPanel Layout!
+
+
+    ### Welcome tab/langding page
     tabPanel(
-      # Our welcome tab
       title = "MetaBridge",
       value = "welcomePanel",
-      # Welcome hero
+
+      # Main panel that will contain text and links
       tags$div(
         id = "welcomeHero",
         class = "jumbotron",
+
         h1("Welcome"),
-        # br(),
+
         tags$div(
           class = "logoWrapper",
           tags$p(
@@ -74,10 +82,15 @@ ui <- fluidPage(
             "with protein-protein interaction networks created from other ",
             "omics types."
           ),
-          br(),
-          div(
 
-            # To see how these buttons are hidden, refer to `www/js/client.js`
+          br(),
+
+          div(
+            # Buttons linking to various tabs of the app. To see how these
+            # buttons are hidden, refer to `www/js/client.js`
+
+            # First the button which shows the app loading, then links to the
+            # Upload panel.
             actionButton(
               inputId = "getStarted",
               label = "Initializing App...",
@@ -86,8 +99,10 @@ ui <- fluidPage(
               icon("circle-o-notch", class = "fa fa-spin", lib = "font-awesome")
             ),
 
+            # Horizontal spacer
             HTML("&nbsp;&nbsp;&nbsp;"),
 
+            # Linking to the Tutorials page
             actionButton(
               inputId = "tutorial",
               label = "Tutorial",
@@ -99,6 +114,7 @@ ui <- fluidPage(
 
             HTML("&nbsp;&nbsp;&nbsp;"),
 
+            # Button linking straight to the about page.
             actionButton(
               inputId = "about",
               label = "About",
@@ -111,10 +127,13 @@ ui <- fluidPage(
         )
       )
     ),
-    # Upload panel!
+
+
+    ### Upload panel
     tabPanel(
       "Upload",
       value = "uploadPanel",
+
       # Sidebar
       tags$div(
         class = "col-sm-3 manual-sidebar",
@@ -163,17 +182,21 @@ ui <- fluidPage(
             title = "Try an example dataset from MetaboAnalyst"
           )
         ),
+
         # Show the columns of the uploaded file
         uiOutput("columnPickerPanel")
       ),
+
       # Display the file that was uploaded
       uiOutput("uploadedTablePanel")
     ),
 
-    # Mapping Panel
+
+    ### Mapping Panel
     tabPanel(
       title = "Map",
       value = "mapPanel",
+
       # Manual Sidebar
       tags$div(
         class = "col-sm-3 manual-sidebar",
@@ -185,14 +208,16 @@ ui <- fluidPage(
             "but KEGG may yield more hits. If you map via KEGG, you also have the ",
             "option to visualize your results."
           ),
+
           # For now just allow one database. Later we can allow multiple
-          # mappings at once.
+          # mappings at once...
           radioButtons(
             "dbChosen",
             "Choose Database",
             choices = c("MetaCyc", "KEGG"),
             selected = "MetaCyc"
           ),
+
           # Map!
           actionButton(
             "mapButton",
@@ -204,8 +229,10 @@ ui <- fluidPage(
           # Maybe show tickbox to allow user to see full results rather than just
           # the summary? Currently not implemented, see `server.R:631`
         ),
+
         # Let the user download their results
         uiOutput("saveMappingPanel"),
+
         # Show panel for continuing to visualization results
         uiOutput("continueToViz")
       ),
@@ -213,13 +240,17 @@ ui <- fluidPage(
       # DISPLAY MAPPING RESULTS
       tags$div(
         class = "col-sm-9",
+
         # Show summary table (server-rendered)
         uiOutput("mappingSummaryPanel"),
+
         # Show FULL results for a selected metabolite (server-rendered)
         uiOutput("fullMappingResultsPanel")
       )
     ),
-    # Visualize the results!
+
+
+    ### Visualize the results!
     tabPanel(
       title = "Pathview",
       value = "vizPanel",
@@ -227,9 +258,13 @@ ui <- fluidPage(
       class = "viz-panel",
       uiOutput("vizPanelUI")
     ),
+
     # Finally, the 'More' Panel, with about, help, etc.
     navbarMenu(
+      # Overall title which contains links to the specific tabs
       "Help",
+
+      ### Tutorial page
       tabPanel(
         title = "Tutorial",
         value = "tutorialPanel",
@@ -267,6 +302,8 @@ ui <- fluidPage(
           includeMarkdown("tutorial/tutorial.md")
         )
       ),
+
+      ### About page
       tabPanel(
         value = "aboutPanel",
         title = "About",
@@ -371,7 +408,7 @@ server <- function(input, output, session) {
   # defined in your UI, as the input will be passed via Shiny.onInputChange()
   observeEvent(input$sessionInitialized, {
     source("deferred.R")
-    # After packages loaded, run button transform to signal ready states
+    # After packages loaded, run button transform to signal ready states.
     runjs("handlers.initGetStarted();")
   }, ignoreNULL = TRUE, ignoreInit = TRUE, once = TRUE)
 
@@ -381,7 +418,6 @@ server <- function(input, output, session) {
   #          Define reactive variables           #
   #                                              #
   ################################################
-
 
   # Reactive Values for Metabolite Data. These are isolated into individual
   # reactive values so we can depend on them for reactive changes.
@@ -396,6 +432,7 @@ server <- function(input, output, session) {
   idTypeChosen <- reactiveVal()
   columnPicked <- reactiveVal()
   hmdbCol <- reactiveVal()
+
 
   ################################################
   #                                              #
@@ -417,6 +454,7 @@ server <- function(input, output, session) {
   observeEvent(input$about, {
     updateNavbarPage(session, inputId = "navbarLayout", selected = "aboutPanel")
   }, ignoreInit = TRUE)
+
 
   ################################################
   #                                              #
@@ -489,8 +527,8 @@ server <- function(input, output, session) {
       # Render the `uploadedDataTable()`
       metaboliteObject()
     }
-    # DataTable options
   },
+  # DataTable options
   options = list(
     pageLength = 10,
     lengthMenu = c(5, 10, 15, 20),
@@ -611,7 +649,6 @@ server <- function(input, output, session) {
   #                                              #
   ################################################
 
-
   # Store ID type chosen as a reactive variable which only changes when the
   # "Map" button is clicked
   observeEvent(input$mapButton, {
@@ -642,10 +679,10 @@ server <- function(input, output, session) {
     mappedMetabolites(mappingOutput$data)
 
     # ...and assign the full object (data plus status, errors, etc.) so we can
-    # access the status reports later
+    # access the status reports later.
     mappingObject(mappingOutput)
 
-    # Create new alert bubble with the status message
+    # Create new alert bubble with the status message.
     mappingAlert(
       status = mappingOutput$status,
       message = mappingOutput$message,
@@ -653,8 +690,8 @@ server <- function(input, output, session) {
     )
   }, ignoreInit = TRUE)
 
-
   ############################# End ##############################
+
 
 
   # THREE STEP RENDER PROCESS - PART 1
