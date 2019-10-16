@@ -603,7 +603,7 @@ server <- function(input, output, session) {
     if (!is.null(metaboliteObject())) {
       tags$form(
         class = "well",
-        # Dynamically render the idType() selector panel here (see below). This
+        # Dynamically render the `idType()` selector panel here (see below). This
         # is intentionally separate so that we do not have a feedback loop that
         # triggers re-rendering. Otherwise, as soon as you change this value,
         # the entire panel re-renders, switching it back to its default.
