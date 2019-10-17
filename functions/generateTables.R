@@ -30,7 +30,7 @@ generateSummaryTable <- function(mappingObject,
   } else if (dbChosen == "MetaCyc") {
 
     table <- mappingObject$data %>%
-      group_by(!!sym(idType), Compound) %>%
+      group_by(!!sym(idType), Compound, KEGG) %>%
       summarize(
         "# Reactions" = n_distinct(`Reaction`, na.rm = TRUE),
         "# Genes (MetaCyc)" = n_distinct(`MetaCyc Gene`, na.rm = TRUE),
