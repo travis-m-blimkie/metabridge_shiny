@@ -6,4 +6,4 @@ keggHumanPathways <- list.files(path = "pathways") %>%
   str_replace(".png$", "") %>%
   str_replace("^hsa", "")
 
-save(keggHumanPathways, file = "data/k05_keggHumanPathways.RData")
+save(keggHumanPathways, file = "data/k05_keggHumanPathways_r92.RData")
