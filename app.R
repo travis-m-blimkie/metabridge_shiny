@@ -70,15 +70,15 @@ ui <- fluidPage(
           tags$p(
             "To start, you'll want a set of metabolites as",
             "HMDB, KEGG, PubChem, or CAS IDs. We recommend ",
-            tags$a("MetaboAnalyst", href = "http://www.metaboanalyst.ca"),
+            tags$b(tags$a("MetaboAnalyst", href = "http://www.metaboanalyst.ca")),
             " for metabolomics data processing and ID conversion. "
           ),
           tags$p(
             "With the output of MetaBridge, you can create a ",
             "protein-protein interaction network representative ",
             "of your metabolomics data. We recommend ",
-            tags$a("NetworkAnalyst", href = "http://www.networkanalyst.ca"),
-            "for generation of these networks and for network-based integration ",
+            tags$b(tags$a("NetworkAnalyst", href = "http://www.networkanalyst.ca")),
+            " for generation of these networks and for network-based integration ",
             "with protein-protein interaction networks created from other ",
             "omics types."
           ),
