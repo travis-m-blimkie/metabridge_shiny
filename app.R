@@ -2,7 +2,7 @@
 # Load the first couple libraries -----------------------------------------
 
 # Most libraries and functions are loaded through a call to `deferred.R` at the
-# beginning of the `app.R::server()` function (`app.R#407`).
+# beginning of the `server()` function (#407).
 library(shiny)
 library(shinyjs)
 
@@ -10,6 +10,11 @@ library(shinyjs)
 # Define UI part of the app -----------------------------------------------
 
 ui <- fluidPage(
+
+  # Useful colours which match the flatly theme:
+  # Dark blue   #2c3e50
+  # Turquoise   #18bc9c
+  # White       #fff
 
   # Head linking to Flatly bootstrap theme and my personal tweaks.
   tags$head(
@@ -102,7 +107,7 @@ ui <- fluidPage(
               icon("circle-o-notch", class = "fa fa-spin", lib = "font-awesome")
             ),
 
-            # Horizontal spacer.
+            # Horizontal spacer
             HTML("&nbsp;&nbsp;&nbsp;"),
 
             # Linking to the Tutorials page.
@@ -115,6 +120,7 @@ ui <- fluidPage(
               title = "Learn how to use MetaBridge for integrative analysis."
             ),
 
+            # Horizontal spacer
             HTML("&nbsp;&nbsp;&nbsp;"),
 
             # Button linking straight to the about page.
@@ -124,7 +130,7 @@ ui <- fluidPage(
               class = "btn-primary btn-lg btn-tooltip btn-hidden", # btn-tooltip
               style = "color: #2c3e50; background-color: #fff; border-color: #2c3e50; width: 155px",
               `data-position` = "bottom",
-              title = "Visit the About page."
+              title = "Learn more about MetaBridge."
             )
           )
         )
@@ -149,6 +155,12 @@ ui <- fluidPage(
             "your metabolites of interest in a single column, or try ",
             "out our example dataset."
           ),
+
+          # Define custom style for the file upload button ("Browse...")
+          tags$style(".btn-file {
+                     background-color: #2c3e50;
+                     border-color: #2c3e50;
+                     }"),
 
           # Upload handling
           fileInput(
@@ -186,7 +198,7 @@ ui <- fluidPage(
             inputId = "tryExamples",
             class = "btn btn-link btn-med btn-tooltip",
             `data-position` = "right",
-            label = "Try Examples",
+            label = tags$b("Try Examples"),
             title = "Try an example dataset from MetaboAnalyst"
           )
         ),
@@ -229,7 +241,7 @@ ui <- fluidPage(
           # Map!
           actionButton(
             "mapButton",
-            "Map",
+            tags$b("Map"),
             class = "btn-primary btn-tooltip",
             `data-position` = "right",
             title = "Map your metabolites to the selected database"
@@ -575,10 +587,10 @@ server <- function(input, output, session) {
       # Include button to proceed
       actionButton(
         inputId = "continueToMap",
-        label = "Proceed",
-        class = "btn-med btn-tooltip",
-        style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50;",
-        title = "Proceed to mapping your metabolites"
+        label   = tags$b("Proceed"),
+        class   = "btn-med btn-tooltip",
+        style   = "color: #fff; background-color: #2c3e50; border-color: #2c3e50;",
+        title   = "Proceed to mapping your metabolites"
         # `data-position` = "right"
       )
     )
@@ -888,7 +900,7 @@ server <- function(input, output, session) {
         # ...with a tooltip.
         downloadButton(
           "downloadMappingData",
-          "Download",
+          tags$b("Download"),
           style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50",
           class = "btn-med btn-tooltip",
           title = "Download your full mapping results",
