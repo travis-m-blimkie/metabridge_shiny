@@ -47,7 +47,7 @@ mappingAlert <- function(message, suggest, status) {
       },
 
       if (status == "warn") {
-        "Please contact me on twitter with the details!"
+        "Please submit an issue on the Github page."
       }
     )
   )
