@@ -1,10 +1,13 @@
 
-# Load the first couple libraries. Most libraries and functions are loaded
-# through a call to `deferred.R` at the beginning of the `server()` function.
+# Load the first couple libraries -----------------------------------------
 
+# Most libraries and functions are loaded through a call to `deferred.R` at the
+# beginning of the `app.R::server()` function (`app.R#407`).
 library(shiny)
 library(shinyjs)
 
+
+# Define UI part of the app -----------------------------------------------
 
 ui <- fluidPage(
 
@@ -253,7 +256,7 @@ ui <- fluidPage(
     ),
 
 
-    ### Visualize the results!
+    ### Visualize With Pathview
     tabPanel(
       title = "Pathview",
       value = "vizPanel",
@@ -267,7 +270,7 @@ ui <- fluidPage(
       # Overall title which contains links to the specific tabs
       "Help",
 
-      ### Tutorial page
+      ### Tutorial Page
       tabPanel(
         title = "Tutorial",
         value = "tutorialPanel",
@@ -394,14 +397,10 @@ ui <- fluidPage(
 )
 
 
-################################################################################
+###########################################################################
 
 
-# TODO Allow multiple mappings in one go (i.e. MetaCyc and KEGG
-# simultaneously?). Could make the two summary tables display side-by-side in
-# the top panel of mapping results, with detailed results below when a row is
-# selected...
-
+# Define the server code --------------------------------------------------
 
 server <- function(input, output, session) {
 
@@ -415,7 +414,7 @@ server <- function(input, output, session) {
 
 
   ################################################
-  #          Define reactive variables           #
+  ##        Define reactive variables           ##
   ################################################
 
   # Reactive Values for Metabolite Data. These are isolated into individual
@@ -434,7 +433,7 @@ server <- function(input, output, session) {
 
 
   ################################################
-  #            Welcome Tab Handlers              #
+  ##          Welcome Tab Handlers              ##
   ################################################
 
   # When clicking "Get Started", switch to `Upload` panel
@@ -454,7 +453,7 @@ server <- function(input, output, session) {
 
 
   ################################################
-  #            Upload Tab Handlers               #
+  ##          Upload Tab Handlers               ##
   ################################################
 
   # Inject example data frame when "Try Examples" is clicked
@@ -637,9 +636,7 @@ server <- function(input, output, session) {
 
 
   ################################################
-  #                                              #
-  #                Map Tab Handlers              #
-  #                                              #
+  ##                Map Tab Handlers            ##
   ################################################
 
   # Store ID type chosen as a reactive variable which only changes when the
@@ -683,8 +680,8 @@ server <- function(input, output, session) {
     )
   }, ignoreInit = TRUE)
 
-  ############################# End ##############################
 
+  ############################# End ##############################
 
 
   # THREE STEP RENDER PROCESS - PART 1
@@ -902,7 +899,6 @@ server <- function(input, output, session) {
 
 
   # Navigate to the "Visualize" page when KEGG was the chosen database.
-
   output$continueToViz <- renderUI({
     # Do not render panel if no database has been mapped against yet, because
     # `databaseChosen()` does not get `input$dbChosen` until the "Map" button
@@ -1006,15 +1002,13 @@ server <- function(input, output, session) {
 
 
   ################################################
-  #                Viz Tab Handlers              #
+  ##              Viz Tab Handlers              ##
   ################################################
-
 
   # Set up reactive values for:
   # - The selected compound of the clicked row
   # - The pathways that compound is involved in
   # - The genes (for the enzymes) that compound interacts with
-
   selectedRowAttrs <- reactiveValues(
     "selectedCompound" = NULL,
     "selectedCompoundName" = NULL,
@@ -1217,5 +1211,7 @@ server <- function(input, output, session) {
   })
 }
 
+
+# Finally, run the app! ---------------------------------------------------
 
 shinyApp(ui, server)
