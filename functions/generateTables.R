@@ -4,10 +4,8 @@
 #' @param idType Selected ID type
 #' @param dbChosen Database chosen for the mapping
 #'
-#' @return
+#' @return Table to be rendered by `DT::renderDataTable()`
 #' @export
-#'
-#' @examples
 #'
 #' Generates a nice DT table summarizing the mapping results
 #'
@@ -71,10 +69,8 @@ generateSummaryTable <- function(mappingObject,
 #'   will grab info for
 #' @param idType ID type of selected row (done by the user)
 #'
-#' @return
+#' @return Table to be rendered by `DT::renderDataTable()`
 #' @export
-#'
-#' @examples
 #'
 #' Generate MetaCyc table for the user-selected row
 #'
@@ -129,10 +125,8 @@ generateMetaCycMetabTable <- function(mappingObject,
 #' @param selectedRows Row selected by the user with desired metabolite
 #' @param idType ID type for the selected metabolite
 #'
-#' @return
+#' @return Table to be rendered by `DT::renderDataTable()`
 #' @export
-#'
-#' @examples
 #'
 #' Generate the more detailed table for a particular metabolite if the chosen
 #' database was KEGG
@@ -190,10 +184,8 @@ generateKEGGMetabTable <- function(mappingObject,
 #' @param table Table of mapped metaboltes
 #' @param dbChosen Chosen database
 #'
-#' @return
+#' @return Tabel which renders the various IDs as links to their respective page.
 #' @export
-#'
-#' @examples
 #'
 #' Generates a hyperlink column based on the IDs present
 #'

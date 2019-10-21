@@ -5,10 +5,8 @@
 #' @param status Status of data import/mapping as defined by other functions
 #'   (e.g. mapGenerally())
 #'
-#' @return
+#' @return UI elements to be rendered as needed.
 #' @export
-#'
-#' @examples
 #'
 #' Function which creates pop-up bubbles containing messages, errors,
 #' suggestions and status of Metabridge app to guide the user

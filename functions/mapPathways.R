@@ -5,10 +5,8 @@
 #' @param summaryTable Summary table prodiced by earlier mapping
 #' @param fullTable Full table...?
 #'
-#' @return
+#' @return Mapped pathways returned if mapping with KEGG.
 #' @export
-#'
-#' @examples
 #'
 #' Map to pathways when the selected database is KEGG for later visualization
 #'
@@ -68,10 +66,8 @@ mapKEGGPathways <- function(idType,
 #' @param summaryTable Summary table produced in earlier mapping step
 #' @param fullTable
 #'
-#' @return
+#' @return Mapped pathways as determined by mapping with MetaCyc.
 #' @export
-#'
-#' @examples
 #'
 #' Maps pathways if MetaCyc was the selected database for previous mapping step
 #'
@@ -132,10 +128,8 @@ mapMetaCycPathways <- function(idType,
 #' @param summaryTable Summary table; the output of the earlier mnapping step
 #' @param fullTable
 #'
-#' @return
+#' @return Mapped pathways to be returned to the user.
 #' @export
-#'
-#' @examples
 #'
 #' Calls one of the above function to map pathways depending on chosen database
 #'

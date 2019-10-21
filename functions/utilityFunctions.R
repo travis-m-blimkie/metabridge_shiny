@@ -2,10 +2,8 @@
 #'
 #' @param vector Input vector to be cleaned
 #'
-#' @return vector
+#' @return Vector stripped of any NA values.
 #' @export
-#'
-#' @examples
 #'
 #' Simple function to remove NA values from input vector
 #'
@@ -21,7 +19,7 @@ notNAs <- function(vector) {
 #'
 #' @param vector Input vector to be cleaned
 #'
-#' @return vector
+#' @return Vector stripped of any empty values.
 #' @export
 #'
 #' @examples
@@ -40,10 +38,8 @@ notEmpty <- function(vector) {
 #'
 #' @param hmdbID HMDB ID to be cleaned and returned
 #'
-#' @return
+#' @return Sanitized HMDB IDs which can be used in mapping.
 #' @export
-#'
-#' @examples
 #'
 #' MetaCyc only supports the older format, five digit HMDB IDs. If we detect
 #' your HMDB IDs are in the newer seven digit format, we will trim the leading
