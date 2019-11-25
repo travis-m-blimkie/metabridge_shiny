@@ -4,10 +4,8 @@
 #' @param genes Genes to be included in the pathway map
 #' @param cpd Data being used to generate the pathway map
 #'
-#' @return filename
+#' @return Create PNG file of pathway which will be displayed to the user.
 #' @export
-#'
-#' @examples
 #'
 #' Given a selected pathway, calls pathview to show the enzyme/metabolite
 #' interactions involving the selected genes

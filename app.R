@@ -1,30 +1,433 @@
 
-# Welcome to the MetaBridge Shiny app!
+# Load the first couple libraries -----------------------------------------
 
-# Travis' notes and to-do for MetaBridge:
-# TODO Allow multiple mappings in one go (i.e. MetaCyc and KEGG
-# simultaneously?). Could make the two summary tables display side-by-side in
-# the top panel of mapping results, with detailed results below when a row is
-# selected
+# Most libraries and functions are loaded through a call to `deferred.R` at the
+# beginning of the `server()` function (#407).
+library(shiny)
+library(shinyjs)
 
 
-shinyServer(function(input, output, session) {
+# Define UI part of the app -----------------------------------------------
+
+ui <- fluidPage(
+
+  # Useful colours which match the flatly theme:
+  # Dark blue   #2c3e50
+  # Turquoise   #18bc9c
+  # White       #fff
+
+  # Head linking to Flatly bootstrap theme and my personal tweaks.
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "css/user.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "css/tippy.css"),
+
+    # Favicon options
+    tags$link(rel = "apple-touch-icon", sizes = "180x180", href = "/apple-touch-icon.png"),
+    tags$link(rel = "icon", type = "image/png", sizes = "32x32", href = "/favicon-32x32.png"),
+    tags$link(rel = "icon", type = "image/png", sizes = "16x16", href = "/favicon-16x16.png"),
+    tags$link(rel = "manifest", href = "/manifest.json"),
+    tags$link(rel = "mask-icon", href = "/safari-pinned-tab.svg", color = "#303e4e"),
+    tags$meta(name = "theme-color", content = "#303e4e"),
+
+    HTML(
+      "<!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src='https://www.googletagmanager.com/gtag/js?id=UA-123892284-1'></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-123892284-1');
+      </script>
+      "
+    )
+  ),
+
+  ### Begin the tab bar layout
+  navbarPage(
+
+    title = HTML("<img src ='/logo_white.svg' alt='M' height='28'"), #  MetaBridge <sup class='tiny'>BETA</sup>
+    id = "navbarLayout",
+
+    # Make sure we use ShinyJS - NEED THIS LINE!
+    header = tagList(useShinyjs()),
+    windowTitle = "MetaBridge",
+    collapsible = TRUE,
+
+
+    ### Welcome tab/langding page
+    tabPanel(
+      title = "MetaBridge",
+      value = "welcomePanel",
+
+      # Main panel that will contain text and links
+      tags$div(
+        id = "welcomeHero",
+        class = "jumbotron",
+
+        h1("Welcome"),
+
+        tags$div(
+          class = "logoWrapper",
+          tags$p(
+            "Welcome to MetaBridge, a web tool for network-based integrative ",
+            "analysis of metabolomics data. Here you can upload a set of metabolites ",
+            "and identify the directly interacting enzymes for network integration. "
+          ),
+          tags$p(
+            "To start, you'll want a set of metabolites as",
+            "HMDB, KEGG, PubChem, or CAS IDs. We recommend ",
+            tags$a("MetaboAnalyst", href = "http://www.metaboanalyst.ca"),
+            " for metabolomics data processing and ID conversion. "
+          ),
+          tags$p(
+            "With the output of MetaBridge, you can create a ",
+            "protein-protein interaction network representative ",
+            "of your metabolomics data. We recommend ",
+            tags$a("NetworkAnalyst", href = "http://www.networkanalyst.ca"),
+            "for generation of these networks and for network-based integration ",
+            "with protein-protein interaction networks created from other ",
+            "omics types."
+          ),
+
+          br(),
+
+          div(
+            # Buttons linking to various tabs of the app. To see how these
+            # buttons are hidden, refer to `www/js/client.js`.
+
+            # First the button which shows the app loading, then links to the
+            # Upload panel.
+            actionButton(
+              inputId = "getStarted",
+              label = "Initializing App...",
+              class = "btn-primary btn-lg disabled", # btn-tooltip
+              `data-position` = "bottom",
+              icon("circle-o-notch", class = "fa fa-spin", lib = "font-awesome")
+            ),
+
+            # Horizontal spacer
+            HTML("&nbsp;&nbsp;&nbsp;"),
+
+            # Linking to the Tutorials page.
+            actionButton(
+              inputId = "tutorial",
+              label = "Tutorial",
+              class = "btn-success btn-lg btn-tooltip btn-hidden", # btn-tooltip
+              `data-position` = "bottom",
+              style = "width: 155px",
+              title = "Learn how to use MetaBridge for integrative analysis."
+            ),
+
+            # Horizontal spacer
+            HTML("&nbsp;&nbsp;&nbsp;"),
+
+            # Button linking straight to the about page.
+            actionButton(
+              inputId = "about",
+              label = "About",
+              class = "btn-primary btn-lg btn-tooltip btn-hidden", # btn-tooltip
+              style = "color: #2c3e50; background-color: #fff; border-color: #2c3e50; width: 155px",
+              `data-position` = "bottom",
+              title = "Learn more about MetaBridge."
+            )
+          )
+        )
+      )
+    ),
+
+
+    ### Upload panel
+    tabPanel(
+      "Upload",
+      value = "uploadPanel",
+
+      # Sidebar
+      tags$div(
+        class = "col-sm-3 manual-sidebar",
+
+        # Separate form 'wells' within the sidebar
+        tags$form(
+          class = "well",
+          tags$p(
+            "Upload a plain-text spreadsheet (CSV or TSV) containing ",
+            "your metabolites of interest in a single column, or try ",
+            "out our example dataset."
+          ),
+
+          # Define custom style for the file upload button ("Browse...")
+          tags$style(".btn-file {
+                     background-color: #2c3e50;
+                     border-color: #2c3e50;
+                     }"),
+
+          # Upload handling
+          fileInput(
+            inputId = "metaboliteUpload",
+            label = "Upload Metabolites",
+            accept = c(
+              "text/csv",
+              "text/comma-separated-values,text/plain",
+              ".csv",
+              "text/tab-separated-values"
+            )
+          ),
+
+          # Header in file?
+          checkboxInput(
+            inputId = "header",
+            label = "Header",
+            value = TRUE
+          ),
+
+          # TSV or CSV?
+          radioButtons(
+            inputId = "sep",
+            label = "Separator",
+            choices = c(
+              Comma = ",",
+              Tab = "\t",
+              Semicolon = ";"
+            ),
+            selected = ","
+          ),
+
+          # OR, try our example!
+          actionLink(
+            inputId = "tryExamples",
+            class = "btn btn-link btn-med btn-tooltip",
+            `data-position` = "right",
+            label = tags$b("Try Examples"),
+            title = "Try an example dataset from MetaboAnalyst"
+          )
+        ),
+
+        # Show the columns of the uploaded file
+        uiOutput("columnPickerPanel")
+      ),
+
+      # Display the file that was uploaded
+      uiOutput("uploadedTablePanel")
+    ),
+
+
+    ### Mapping Panel
+    tabPanel(
+      title = "Map",
+      value = "mapPanel",
+
+      # Manual Sidebar
+      tags$div(
+        class = "col-sm-3 manual-sidebar",
+        id = "mapPanelSidebar",
+        tags$form(
+          class = "well",
+          tags$p(
+            "Choose a database to map with. MetaCyc has higher quality annotations, ",
+            "but KEGG may yield more hits. If you map via KEGG, you also have the ",
+            "option to visualize your results."
+          ),
+
+          # For now just allow one database. Later we can allow multiple
+          # mappings at once...
+          radioButtons(
+            "dbChosen",
+            "Choose Database",
+            choices = c("MetaCyc", "KEGG"),
+            selected = "MetaCyc"
+          ),
+
+          # Map!
+          actionButton(
+            "mapButton",
+            tags$b("Map"),
+            class = "btn-primary btn-tooltip",
+            `data-position` = "right",
+            title = "Map your metabolites to the selected database"
+          )
+        ),
+
+        # Let the user download their results
+        uiOutput("saveMappingPanel"),
+
+        # Show panel for continuing to visualization results
+        uiOutput("continueToViz")
+      ),
+
+      # Display mapping results
+      tags$div(
+        class = "col-sm-9",
+
+        # Show summary table.
+        uiOutput("mappingSummaryPanel"),
+
+        # Show FULL results for a selected metabolite.
+        uiOutput("fullMappingResultsPanel")
+      )
+    ),
+
+
+    ### Visualize With Pathview
+    tabPanel(
+      title = "Pathview",
+      value = "vizPanel",
+      id = "visualizationPanel",
+      class = "viz-panel",
+      uiOutput("vizPanelUI")
+    ),
+
+    # Finally, the 'More' Panel, with about, help, etc.
+    navbarMenu(
+      # Overall title which contains links to the specific tabs
+      "Help",
+
+      ### Tutorial Page
+      tabPanel(
+        title = "Tutorial",
+        value = "tutorialPanel",
+        tags$div(
+          class = "jumbotron",
+          tags$h1("Tutorial"),
+          tags$div(
+            class = "logoWrapper",
+            tags$h2("Network-Based Integrative Analysis with MetaBridge"),
+            tags$p(
+              "Below you will find a sample workflow for integrating your ",
+              "metabolomics data with transcriptomics or proteomics data via ",
+              "network methodologies. You can also view this tutorial on ",
+              HTML(paste0(
+                "<a href='https://github.com/samhinshaw/metabridge_shiny/blob/master/tutorial/tutorial.md' ",
+                "target='_blank'>GitHub</a>."
+              ))
+            ),
+            tags$ol(
+              tags$li(tags$a(
+                "Metabolite Preprocessing",
+                href = "#metabolite-preprocessing"
+              )),
+              tags$li(tags$a(
+                "MetaBridge Mapping",
+                href = "#metabridge-mapping"
+              )),
+              tags$li(tags$a(
+                "NetworkAnalyst",
+                href = "#networkanalyst"
+              ))
+            )
+          )
+        ),
+        div(
+          class = "col-lg-10 tutorial",
+          # class = 'tutorial',
+          includeMarkdown("tutorial/tutorial.md")
+        )
+      ),
+
+      ### About page
+      tabPanel(
+        value = "aboutPanel",
+        title = "About",
+        tags$div(
+          class = "jumbotron",
+          tags$h1("About"),
+          tags$div(
+            class = "logoWrapper",
+            tags$p(
+              "MetaBridge was designed by Samuel Hinshaw and Travis Blimkie at the ",
+              tags$a(href = "http://cmdr.ubc.ca/bobh/", "Centre for Microbial Diseases and Immunity Research"),
+              " at The University of British Columbia.",
+              "MetaBridge was published in",
+              tags$em("Bioinformatics"),
+              " (doi: ",
+              tags$a(href = "https://doi.org/10.1093/bioinformatics/bty331", "10.1093/bioinformatics/bty331"),
+              "). Please cite this paper when using MetaBridge in your analyses. ",
+              "A protocol was also published in ", tags$em("Current Protocols in Bioinformatics"),
+              " (doi: ", tags$a(href = "", "doi_number"), ")."
+            ),
+
+            tags$p(
+              "For help, you can post an issue at the ",
+              tags$a(href = "https://github.com/travis-m-blimkie/metabridge_shiny", "Github page.")
+            ),
+            tags$p(
+              "MetaBridge uses the following databases and R packages:"
+            ),
+            tags$p(
+              tags$dl(
+
+                # MetaCyc
+                tags$dt(
+                  tags$a(href = "https://metacyc.org/", "MetaCyc v23")
+                ),
+                tags$dd("Curated database for human metabolomic data"),
+
+                # KEGG
+                tags$dt(
+                  tags$a(href = "https://www.genome.jp/kegg/", "KEGG Release 92")
+                ),
+                tags$dd("Large database containing multiple data types"),
+
+                # Pathview
+                tags$dt(
+                  tags$a(href = "https://doi.org/10.1093/bioinformatics/btt285", "Pathview")
+                ),
+                tags$dd("Pathway-based data integration and visualization"),
+
+                # Shiny
+                tags$dt(
+                  tags$a(href = "https://shiny.rstudio.com/", "Shiny")
+                ),
+                tags$dd("Web Application Framework for R"),
+
+                # ShinyCSSLoaders
+                tags$dt(
+                  tags$a(href = "https://github.com/andrewsali/shinycssloaders", "shinycssloaders")
+                ),
+                tags$dd("Animated loaders for shiny outputs"),
+
+                # ShinyJS
+                tags$dt(
+                  tags$a(href = "https://deanattali.com/shinyjs/", "shinyjs")
+                ),
+                tags$dd("Easily Improve the User Experience of Your Shiny Apps in Seconds"),
+
+                # Tidyverse
+                tags$dt(
+                  tags$a(href = "https://www.tidyverse.org/", "The Tidyverse"),
+                  tags$dd("An opinionated collection of R packages designed for data science. ")
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  ),
+  tags$script(src = "js/tippy.min.js"),
+  tags$script(src = "js/client.js")
+)
+
+
+###########################################################################
+
+
+# Define the server code --------------------------------------------------
+
+server <- function(input, output, session) {
 
   # Wait for sessionInitialized to load packages. This does not have to be
   # defined in your UI, as the input will be passed via Shiny.onInputChange()
   observeEvent(input$sessionInitialized, {
     source("deferred.R")
-    # After packages loaded, run button transform to signal ready states
+    # After packages loaded, run button transform to signal ready states.
     runjs("handlers.initGetStarted();")
   }, ignoreNULL = TRUE, ignoreInit = TRUE, once = TRUE)
 
 
   ################################################
-  #                                              #
-  #          Define reactive variables           #
-  #                                              #
+  ##        Define reactive variables           ##
   ################################################
-
 
   # Reactive Values for Metabolite Data. These are isolated into individual
   # reactive values so we can depend on them for reactive changes.
@@ -40,10 +443,9 @@ shinyServer(function(input, output, session) {
   columnPicked <- reactiveVal()
   hmdbCol <- reactiveVal()
 
+
   ################################################
-  #                                              #
-  #            Welcome Tab Handlers              #
-  #                                              #
+  ##          Welcome Tab Handlers              ##
   ################################################
 
   # When clicking "Get Started", switch to `Upload` panel
@@ -61,10 +463,9 @@ shinyServer(function(input, output, session) {
     updateNavbarPage(session, inputId = "navbarLayout", selected = "aboutPanel")
   }, ignoreInit = TRUE)
 
+
   ################################################
-  #                                              #
-  #            Upload Tab Handlers               #
-  #                                              #
+  ##          Upload Tab Handlers               ##
   ################################################
 
   # Inject example data frame when "Try Examples" is clicked
@@ -119,27 +520,27 @@ shinyServer(function(input, output, session) {
     )
   })
 
-  # Once the data is populated, render a preview of the data to the user
+  # Once the data is populated, render a preview of the data to the user.
   output$uploadedDataTable <- DT::renderDataTable({
     input$tryExamples
     input$sep
     input$header
     input$metaboliteUpload
     if (is.null(metaboliteObject())) {
-      # Return `NULL` if nothing present so that we don't pass an error
+      # Return `NULL` if nothing present so that we don't pass an error.
       return(NULL)
     } else {
-      # Render the `uploadedDataTable()`
+      # Render the `uploadedDataTable()`.
       metaboliteObject()
     }
-  # DataTable options
   },
+  # DataTable options
   options = list(
     pageLength = 10,
     lengthMenu = c(5, 10, 15, 20),
     scrollX = "100%",
     # AMAZING! Crucial argument to make sure DT doesn't overflow vertical
-    # scrolling options
+    # scrolling options.
     scrollY = "450px",
     scrollCollapse = TRUE,
     paging = FALSE
@@ -165,7 +566,7 @@ shinyServer(function(input, output, session) {
     input$uploadedDataTable_columns_selected
     metaboliteObject()
   }, {
-    # Wait 500ms after panel render and re-activate tooltips
+    # Wait 500ms after panel render and re-activate tooltips.
     runjs("setTimeout(() => { handlers.activateTooltips(['.panel-tooltip', '.btn-tooltip']); }, 100)")
   })
 
@@ -186,10 +587,11 @@ shinyServer(function(input, output, session) {
       # Include button to proceed
       actionButton(
         inputId = "continueToMap",
-        label = "Proceed",
-        class = "btn-med btn-tooltip",
-        title = "Proceed to mapping your metabolites",
-        `data-position` = "right"
+        label   = tags$b("Proceed"),
+        class   = "btn-med btn-tooltip",
+        style   = "color: #fff; background-color: #2c3e50; border-color: #2c3e50;",
+        title   = "Proceed to mapping your metabolites"
+        # `data-position` = "right"
       )
     )
   })
@@ -203,11 +605,11 @@ shinyServer(function(input, output, session) {
     input$sep
     input$header
   }, {
-    # Only render if NOT `NULL`
+    # Only render if NOT `NULL`.
     if (!is.null(metaboliteObject())) {
       tags$form(
         class = "well",
-        # Dynamically render the idType() selector panel here (see below). This
+        # Dynamically render the `idType()` selector panel here (see below). This
         # is intentionally separate so that we do not have a feedback loop that
         # triggers re-rendering. Otherwise, as soon as you change this value,
         # the entire panel re-renders, switching it back to its default.
@@ -232,14 +634,12 @@ shinyServer(function(input, output, session) {
   })
 
   # If the selected ID type is a column name in the data frame, preselect that
+  # column for use in mapping.
   observeEvent(columnPicked(), {
     if (tolower(columnPicked()) %in% c("cas", "pubchem", "hmdb", "kegg")) {
       preSelectedIDType(columnPicked())
     }
-  },
-  ignoreNULL = TRUE,
-  ignoreInit = TRUE
-  )
+  }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
   # Switch to `Map` panel when "Proceed" is clicked on the `Upload` tab
   observeEvent(input$continueToMap, {
@@ -248,11 +648,8 @@ shinyServer(function(input, output, session) {
 
 
   ################################################
-  #                                              #
-  #                Map Tab Handlers              #
-  #                                              #
+  ##                Map Tab Handlers            ##
   ################################################
-
 
   # Store ID type chosen as a reactive variable which only changes when the
   # "Map" button is clicked
@@ -263,16 +660,16 @@ shinyServer(function(input, output, session) {
   # Here's where the heavy lifting takes place! We now take the column the user
   # specified and map the IDs to genes!
 
-  # When the map button is clicked, update the `dbChosen()`
+  # When the map button is clicked, update the `dbChosen()`.
   observeEvent(input$mapButton, {
-    # Change the `dbChosen()` reactive value
+    # Change the `dbChosen()` reactive value.
     databaseChosen(input$dbChosen)
 
     # Clear any pre-existing alerts
     removeUI(selector = "#mappingAlert")
 
-    # Conduct the mapping with our mapGenerally() function defined in
-    # "functions/mapGenerally.R"
+    # Conduct the mapping with our `mapGenerally()` function defined in
+    # "functions/mapGenerally.R".
     mappingOutput <- mapGenerally(
       importDF = metaboliteObject(),
       col = columnPicked(),
@@ -284,10 +681,10 @@ shinyServer(function(input, output, session) {
     mappedMetabolites(mappingOutput$data)
 
     # ...and assign the full object (data plus status, errors, etc.) so we can
-    # access the status reports later
+    # access the status reports later.
     mappingObject(mappingOutput)
 
-    # Create new alert bubble with the status message
+    # Create new alert bubble with the status message.
     mappingAlert(
       status = mappingOutput$status,
       message = mappingOutput$message,
@@ -324,7 +721,7 @@ shinyServer(function(input, output, session) {
 
   # STEP TWO
   # ~~~~~~~~~~
-  # Once metabolites have been mapped, render the results
+  # Once metabolites have been mapped, render the results.
   output$mappingSummaryTable <- DT::renderDataTable({
     mappingSummary$table %>% hyperlinkTable(databaseChosen())
   },
@@ -338,22 +735,22 @@ shinyServer(function(input, output, session) {
   # STEP THREE
   # ~~~~~~~~~~
   # Render the panel separately so we have reactive control over all the UI
-  # elements surrounding the table, not just the table itself
+  # elements surrounding the table, not just the table itself.
   output$mappingSummaryPanel <- renderUI({
     # Make sure this depends on the summary table (and thus updates every time
-    # the summary table does)
+    # the summary table does).
     mappingSummary$table
     # Now proceed
     if (is.null(mappingObject())) {
       return(NULL)
     } else if (mappingObject()$status == "error" | mappingObject()$status == "empty") {
       return(NULL)
-      # Only render if we had non-null, non-error, non-empty results
+      # Only render if we had non-null, non-error, non-empty results.
     } else {
       return(
         tagList(
           tags$h3(paste0("Mapping Summary - ", databaseChosen()), class = "tab-header"),
-          # Insert the datatable here that we rendered above
+          # Insert the datatable here that we rendered above.
           DT::dataTableOutput("mappingSummaryTable")
         )
       )
@@ -362,12 +759,13 @@ shinyServer(function(input, output, session) {
 
   # When a new metabolite is selected, set it to the selected metabolite
   # reactive value! Why? So we can reset it given other certain conditions (see
-  # the next function)
+  # the next function).
   observeEvent(input$mappingSummaryTable_rows_selected, {
     selectedMetab(input$mappingSummaryTable_rows_selected)
   })
 
-  # But when the map button is selected, nullify any previously selected metabolite
+  # But when the map button is selected, nullify any previously selected
+  # metabolite.
   observeEvent(input$mapButton, {
     selectedMetab(NULL)
   })
@@ -401,12 +799,12 @@ shinyServer(function(input, output, session) {
     if (mappingObject()$status == "error" | mappingObject()$status == "empty") {
       mappingObject()$data %>% mappedMetaboliteTable()
 
-    # Otherwise, generate our table depending on the chosen database! As with
-    # `generateSummaryTable()`, these functions come from "generateTables.R"
+      # Otherwise, generate our table depending on the chosen database! As with
+      # `generateSummaryTable()`, these functions come from "generateTables.R"
     } else if (databaseChosen() == "KEGG") {
       if (mappingSummary$dbChosen != "KEGG") {
         cat("DATABASE WAS NOT KEGG, NULL RETURNING...")
-        # If our summary table was somehow not updated yet, exit
+        # If our summary table was somehow not updated yet, exit.
         return(NULL)
       } else {
         generateKEGGMetabTable(
@@ -415,14 +813,14 @@ shinyServer(function(input, output, session) {
           selectedMetab(),
           idTypeChosen()
         ) %>% mappedMetaboliteTable()
-        # Otherwise proceed with generated the metabolite table
+        # Otherwise proceed with generated the metabolite table.
       }
     } else if (databaseChosen() == "MetaCyc") {
-      # If our summary table was somehow not updated yet, exit
+      # If our summary table was somehow not updated yet, exit.
       if (mappingSummary$dbChosen != "MetaCyc") {
         cat("DATABASE WAS NOT METACYC, NULL RETURNING...")
         return(NULL)
-        # Otherwise proceed with generated the metabolite table
+        # Otherwise proceed with generated the metabolite table.
       } else {
         generateMetaCycMetabTable(
           mappingObject(),
@@ -442,7 +840,7 @@ shinyServer(function(input, output, session) {
     if (is.null(mappingObject()) | is.null(selectedMetab())) {
       return(data.frame())
     } else if (mappingObject()$status == "success") {
-      # Only render if we had non-null, non-error, non-empty results
+      # Only render if we had non-null, non-error, non-empty results.
       mappedMetaboliteTable() %>% hyperlinkTable(databaseChosen())
     }
   },
@@ -454,19 +852,19 @@ shinyServer(function(input, output, session) {
   )
 
   # STEP THREE
-  # Render entire UI output, including the rendered table
+  # Render entire UI output, including the rendered table.
   # ~~~~~~~~~~
   output$fullMappingResultsPanel <- renderUI({
     tags$div(
       if (is.null(mappingObject())) {
         return(NULL)
         # If we had an error, change the header to reflect that these are
-        # intermediate results
+        # intermediate results.
       } else if (
         mappingObject()$status == "error" | mappingObject()$status == "empty"
       ) {
         tags$h3("Intermediate Results")
-        # Only render if we had non-null, non-error, non-empty results
+        # Only render if we had non-null, non-error, non-empty results.
       } else {
         tagList(
           tags$hr(),
@@ -479,7 +877,7 @@ shinyServer(function(input, output, session) {
   })
 
   # Watch for the "Try Again" button that will be rendered if an error occurs in
-  # the mapping
+  # the mapping.
   observeEvent(input$remap, {
     updateNavbarPage(session, inputId = "navbarLayout", selected = "uploadPanel")
   }, ignoreInit = TRUE, ignoreNULL = TRUE)
@@ -502,25 +900,25 @@ shinyServer(function(input, output, session) {
         # ...with a tooltip.
         downloadButton(
           "downloadMappingData",
-          "Download",
+          tags$b("Download"),
+          style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50",
           class = "btn-med btn-tooltip",
-          title = "Download your full mapping results"
+          title = "Download your full mapping results",
         )
       )
     }
   })
 
 
-  # Navigate to the "Visualize" page when KEGG was the chosen database
-
+  # Navigate to the "Visualize" page when KEGG was the chosen database.
   output$continueToViz <- renderUI({
     # Do not render panel if no database has been mapped against yet, because
     # `databaseChosen()` does not get `input$dbChosen` until the "Map" button
-    # is clicked
+    # is clicked.
     if (is.null(databaseChosen())) {
       return(NULL)
 
-    # Once mapped, render the panel
+      # Once mapped, render the panel.
     } else if (databaseChosen() == "MetaCyc") {
       return(NULL)
     } else {
@@ -533,16 +931,16 @@ shinyServer(function(input, output, session) {
         ),
         br(),
 
-        # If we mapped against KEGG, show "Visualize" button
-        if (databaseChosen() == "KEGG" &
-          !is.null(selectedMetab())) {
+        # If we mapped against KEGG, show "Visualize" button.
+        if (databaseChosen() == "KEGG" & !is.null(selectedMetab())) {
           actionButton(
             inputId = "visualizeButton",
             label = "Visualize",
             class = "btn btn-med btn-tooltip",
+            style = "color: #fff; background-color: #2c3e50; border-color: #2c3e50;",
             title = "Visualize your results with pathview"
           )
-        # But if we mapped against MetaCyc disable the "Visualize" button
+        # But if we mapped against MetaCyc disable the "Visualize" button.
         } else {
           actionButton(
             inputId = "visualizeButton",
@@ -557,7 +955,8 @@ shinyServer(function(input, output, session) {
 
   # Client-side JS to enable/disable "Visualize" tab! Also disables the
   # "Visualize" tab in the navbar when visualization is not possible. Make sure
-  # that we have a tooltip explaining why the "Visualization" tab is disabled
+  # that we have a tooltip explaining why the "Visualization" tab is disabled. A
+  # lot of this refers to code in `www/js/client.js`.
   observeEvent(input$mapButton, {
     if (databaseChosen() == "KEGG" & !is.null(selectedMetab())) {
       runjs("$(\"a[data-value='vizPanel']\").parent().removeClass('disabled');")
@@ -579,14 +978,14 @@ shinyServer(function(input, output, session) {
     }
   })
 
-  # When clicking "Visualize", switch to the "Visualize" panel
+  # When clicking "Visualize", switch to the "Visualize" panel.
   observeEvent(input$visualizeButton, {
     updateNavbarPage(session, inputId = "navbarLayout", selected = "vizPanel")
   }, ignoreInit = TRUE)
 
-  # Export the data
+  # Export the data.
   output$downloadMappingData <- downloadHandler(
-    # Name file format: `originalFilename_mapped_dbChosen.savetype`
+    # Name file format: `originalFilename_mapped_dbChosen.savetype`.
     filename = function() {
       paste0(
         ifelse(
@@ -615,11 +1014,8 @@ shinyServer(function(input, output, session) {
 
 
   ################################################
-  #                                              #
-  #                Viz Tab Handlers              #
-  #                                              #
+  ##              Viz Tab Handlers              ##
   ################################################
-
 
   # Set up reactive values for:
   # - The selected compound of the clicked row
@@ -658,15 +1054,18 @@ shinyServer(function(input, output, session) {
     # Assign results to their reactive values
     selectedRowAttrs$selectedCompound <-
       pathwayMappingAttrs$selectedCompound
+
     selectedRowAttrs$selectedCompoundName <-
       pathwayMappingAttrs$selectedCompoundName
+
     selectedRowAttrs$genesOfSelectedCompound <-
       pathwayMappingAttrs$genesOfSelectedCompound
+
     selectedRowAttrs$pathwaysOfSelectedCompound <-
       pathwayMappingAttrs$pathwaysOfSelectedCompound
   })
 
-  # Render the pathway panel once
+  # Render the pathway panel once.
   output$pathwayPanel <- renderUI({
     # Check for results before rendering!
     if (nrow(selectedRowAttrs$pathwaysOfSelectedCompound) == 0) {
@@ -726,11 +1125,11 @@ shinyServer(function(input, output, session) {
       })
     }
 
-    # Setup named variables for standard eval
+    # Setup named variables for standard evaluation.
     pathwayNameIDcol <- as.name("namedPway")
     selectedPathway <- quo(input$pathwaysPicked)
 
-    # Pull the pathway ID from the pathway name selected by the user
+    # Pull the pathway ID from the pathway name selected by the user.
     selectedPathwayID <-
       selectedRowAttrs$pathwaysOfSelectedCompound %>%
       filter(!!(pathwayNameIDcol) == input$pathwaysPicked) %>%
@@ -742,8 +1141,8 @@ shinyServer(function(input, output, session) {
       cpd = selectedRowAttrs$selectedCompound
     )
 
-    # Return a list containing the filename
-    # Render Image at 1000px and then constrain image to `div` in CSS
+    # Return a list containing the filename. Render image at 1000px and then
+    # constrain image to `div` in CSS.
     return(list(
       src = filename,
       contentType = "image/png",
@@ -753,7 +1152,7 @@ shinyServer(function(input, output, session) {
     ))
   }, deleteFile = TRUE)
 
-  # Render entire UI for `vizPanel`
+  # Render entire UI for `vizPanel`.
   output$vizPanelUI <- renderUI({
     if (is.null(databaseChosen())) {
       tags$div(
@@ -806,12 +1205,13 @@ shinyServer(function(input, output, session) {
         tags$div(
           class = "col-sm-3 manual-sidebar",
           # Allow user to pick which pathway that the selected metabolite
-          # participates in to view
+          # participates in to view.
           tags$form(
             class = "well",
             uiOutput("pathwayPanel")
           )
         ),
+
         # Pathway visualization
         tags$div(
           class = "col-sm-9",
@@ -821,4 +1221,9 @@ shinyServer(function(input, output, session) {
       )
     }
   })
-})
+}
+
+
+# Finally, run the app! ---------------------------------------------------
+
+shinyApp(ui, server)
